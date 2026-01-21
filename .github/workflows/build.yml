@@ -1,85 +1,50 @@
-name: Build Cross-Platform (Qt + OpenCV)
+name: Build Windows Release
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch: # Allows you to run it manually
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            qt_arch: win64_msvc2022_64
-            qt_ver: 6.6.0
-          - os: macos-latest
-            qt_arch: clang_64
-            qt_ver: 6.6.0
-
+  build-windows:
+    runs-on: windows-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. FIX: Manually setup Python 3.10 to prevent 'exit code 1' in Windows
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      # 1. Install Dependencies via vcpkg
+      # This replaces the Python Qt installer entirely
+      - name: Install Qt & OpenCV
+        run: |
+          vcpkg install qtbase:x64-windows
+          vcpkg install opencv4:x64-windows
 
-      # 2. Install Qt
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: ${{ matrix.qt_ver }}
-          arch: ${{ matrix.qt_arch }}
-          setup-python: 'false' # Prevents the action from conflicting with the Python step above
-          extra: '--external 7z' # Faster/more stable extraction on Windows
-
-      # 3. Install OpenCV
-      - name: Install OpenCV (Windows)
-        if: runner.os == 'Windows'
-        run: vcpkg install opencv4:x64-windows
-
-      - name: Install OpenCV (macOS)
-        if: runner.os == 'macOS'
-        run: brew install opencv
-
-      # 4. Configure CMake
-      # Using the vcpkg toolchain for Windows to find OpenCV automatically
+      # 2. Configure CMake
+      # We point CMake to the vcpkg toolchain so it finds everything
       - name: Configure CMake
         run: |
           mkdir build
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            ${{ runner.os == 'Windows' && '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake' || '' }}
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
 
-      # 5. Build Project
-      - name: Build Project
+      # 3. Build the Project
+      - name: Build
         run: cmake --build build --config Release
 
-      # 6. Packaging (Deployment)
-      - name: Package Windows
-        if: runner.os == 'Windows'
+      # 4. Deployment (Gather DLLs)
+      # vcpkg usually handles DLLs, but we'll use windeployqt to be safe
+      - name: Package
         run: |
-          windeployqt build/Release/Pebble.exe
+          $QT_BIN = "C:/vcpkg/installed/x64-windows/tools/qt6/bin"
+          & "$QT_BIN/windeployqt.exe" build/Release/Pebble.exe
           powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
 
-      - name: Package macOS
-        if: runner.os == 'macOS'
-        run: |
-          macdeployqt build/Pebble.app -dmg
-          mv build/Pebble.dmg Pebble-macOS.dmg
-
-      # 7. Upload Artifacts
-      - name: Upload Artifacts
+      # 5. Upload
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Pebble-${{ runner.os }}
-          path: |
-            *.zip
-            *.dmg
+          name: Pebble-Windows
+          path: Pebble-Windows.zip
