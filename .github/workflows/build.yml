@@ -1,50 +1,42 @@
-name: Build Windows Release
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: # Allows you to run it manually
+name: Fast Windows Build
+on: [push]
 
 jobs:
   build-windows:
     runs-on: windows-latest
-    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Install Dependencies via vcpkg
-      # This replaces the Python Qt installer entirely
-      - name: Install Qt & OpenCV
+      # 1. Install PRE-COMPILED binaries (Takes ~2 mins)
+      - name: Install Qt and OpenCV
         run: |
-          vcpkg install qtbase:x64-windows
-          vcpkg install opencv4:x64-windows
+          choco install qt6-base-dev -y
+          choco install opencv -y
 
       # 2. Configure CMake
-      # We point CMake to the vcpkg toolchain so it finds everything
-      - name: Configure CMake
+      # We tell CMake exactly where Chocolatey puts the files
+      - name: Configure
         run: |
           mkdir build
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
-            -DVCPKG_TARGET_TRIPLET=x64-windows
+            -DQt6_DIR="C:/tools/Qt6/lib/cmake/Qt6" `
+            -DOpenCV_DIR="C:/tools/opencv/build"
 
-      # 3. Build the Project
+      # 3. Build (Takes ~1 min)
       - name: Build
         run: cmake --build build --config Release
 
-      # 4. Deployment (Gather DLLs)
-      # vcpkg usually handles DLLs, but we'll use windeployqt to be safe
+      # 4. Package
       - name: Package
         run: |
-          $QT_BIN = "C:/vcpkg/installed/x64-windows/tools/qt6/bin"
-          & "$QT_BIN/windeployqt.exe" build/Release/Pebble.exe
+          $deploytool = "C:/tools/Qt6/bin/windeployqt.exe"
+          & $deploytool build/Release/Pebble.exe
           powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
 
-      # 5. Upload
-      - name: Upload Artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Pebble-Windows
+          name: Windows-Release
           path: Pebble-Windows.zip
