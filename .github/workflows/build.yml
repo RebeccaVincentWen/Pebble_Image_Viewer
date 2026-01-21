@@ -25,20 +25,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. FIX: Explicitly set up Python to prevent 'exit code 1'
+      # 1. FIX: Manually setup Python 3.10 to prevent 'exit code 1' in Windows
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # 2. FIX: Install Qt with stable settings
+      # 2. Install Qt
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: ${{ matrix.qt_ver }}
           arch: ${{ matrix.qt_arch }}
-          setup-python: 'false' # Tells the action to use the Python we just set up
-          extra: '--external 7z' # Uses the system 7z for faster/stable extraction
+          setup-python: 'false' # Prevents the action from conflicting with the Python step above
+          extra: '--external 7z' # Faster/more stable extraction on Windows
 
       # 3. Install OpenCV
       - name: Install OpenCV (Windows)
@@ -50,6 +50,7 @@ jobs:
         run: brew install opencv
 
       # 4. Configure CMake
+      # Using the vcpkg toolchain for Windows to find OpenCV automatically
       - name: Configure CMake
         run: |
           mkdir build
@@ -61,7 +62,7 @@ jobs:
       - name: Build Project
         run: cmake --build build --config Release
 
-      # 6. Deployment / Packaging
+      # 6. Packaging (Deployment)
       - name: Package Windows
         if: runner.os == 'Windows'
         run: |
@@ -74,7 +75,7 @@ jobs:
           macdeployqt build/Pebble.app -dmg
           mv build/Pebble.dmg Pebble-macOS.dmg
 
-      # 7. Upload Finished App
+      # 7. Upload Artifacts
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
