@@ -29,7 +29,6 @@ jobs:
       - name: Configure
         run: |
           if (!(Test-Path build)) { mkdir build }
-          # Chocolatey sets $env:Qt6_DIR automatically to the correct path
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
             -DQt6_DIR="$env:Qt6_DIR" `
