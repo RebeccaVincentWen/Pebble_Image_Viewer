@@ -29,9 +29,15 @@ jobs:
       - name: Configure
         run: |
           if (!(Test-Path build)) { mkdir build }
+          
+          # Chocolatey installs into a versioned subfolder (e.g. C:/tools/Qt6/6.x.x/...)
+          # This command finds the folder actually containing the CMake files.
+          $QT_ROOT = Get-ChildItem -Path "C:/tools/Qt6/*/msvc*" -Directory | Select-Object -First 1 -ExpandProperty FullName
+          $OPENCV_PATH = "C:/tools/opencv/build"
+
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="C:/tools/Qt6;C:/tools/opencv/build"
+            -DCMAKE_PREFIX_PATH="$QT_ROOT;$OPENCV_PATH"
 
       # 4. Build
       - name: Build
