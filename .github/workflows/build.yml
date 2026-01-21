@@ -31,7 +31,7 @@ jobs:
           if (!(Test-Path build)) { mkdir build }
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DQt6_DIR="C:/tools/Qt6/lib/cmake/Qt6" `
+            -DQt6_DIR="C:/tools/Qt6/lib/cmake/Qt6/Qt6" `
             -DOpenCV_DIR="C:/tools/opencv/build"
 
       # 4. Build
