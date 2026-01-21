@@ -25,19 +25,26 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Install Qt
+      # 1. FIX: Explicitly set up Python to prevent 'exit code 1'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 2. FIX: Install Qt with stable settings
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: ${{ matrix.qt_ver }}
           arch: ${{ matrix.qt_arch }}
+          setup-python: 'false' # Tells the action to use the Python we just set up
+          extra: '--external 7z' # Uses the system 7z for faster/stable extraction
 
-      # 2. Install OpenCV (Windows via vcpkg)
+      # 3. Install OpenCV
       - name: Install OpenCV (Windows)
         if: runner.os == 'Windows'
         run: vcpkg install opencv4:x64-windows
 
-      # 3. Install OpenCV (macOS via Homebrew)
       - name: Install OpenCV (macOS)
         if: runner.os == 'macOS'
         run: brew install opencv
@@ -48,14 +55,13 @@ jobs:
           mkdir build
           cmake -S . -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
             ${{ runner.os == 'Windows' && '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake' || '' }}
 
       # 5. Build Project
       - name: Build Project
         run: cmake --build build --config Release
 
-      # 6. Deployment / Packaging (Collect DLLs/Frameworks)
+      # 6. Deployment / Packaging
       - name: Package Windows
         if: runner.os == 'Windows'
         run: |
