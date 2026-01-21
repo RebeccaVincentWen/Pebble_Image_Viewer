@@ -8,31 +8,42 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Install PRE-COMPILED binaries (Takes ~2 mins)
+      # 1. Cache Chocolatey Packages
+      - name: Cache Dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:/ProgramData/chocolatey/lib/qt6-base-dev
+            C:/tools/opencv
+          key: ${{ runner.os }}-deps-${{ hashFiles('.github/workflows/*.yml') }}
+
+      # 2. Install binaries (Only runs if cache miss)
       - name: Install Qt and OpenCV
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           choco install qt6-base-dev -y
           choco install opencv -y
 
-      # 2. Configure CMake
-      # We tell CMake exactly where Chocolatey puts the files
+      # 3. Configure CMake
       - name: Configure
         run: |
           mkdir build
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DQt6_DIR="C:/tools/Qt6/lib/cmake/Qt6" `
+            -DQt6_DIR="C:/ProgramData/chocolatey/lib/qt6-base-dev/lib/cmake/Qt6" `
             -DOpenCV_DIR="C:/tools/opencv/build"
 
-      # 3. Build (Takes ~1 min)
+      # 4. Build
       - name: Build
         run: cmake --build build --config Release
 
-      # 4. Package
+      # 5. Package
       - name: Package
         run: |
-          $deploytool = "C:/tools/Qt6/bin/windeployqt.exe"
-          & $deploytool build/Release/Pebble.exe
+          $qt_bin = "C:/ProgramData/chocolatey/lib/qt6-base-dev/bin"
+          $env:PATH = "$qt_bin;$env:PATH"
+          & "$qt_bin/windeployqt.exe" --release build/Release/Pebble.exe
           powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
 
       - name: Upload
