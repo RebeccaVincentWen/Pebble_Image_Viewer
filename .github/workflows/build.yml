@@ -1,59 +1,47 @@
-name: Fast Windows Build
-on: [push]
+name: Windows Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build-windows:
     runs-on: windows-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      # 1. Cache Dependencies
-      - name: Cache Dependencies
-        id: cache-deps
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:/tools/Qt6
-            C:/tools/opencv
-          key: ${{ runner.os }}-deps-v1
+    - name: Install Qt6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.9.3'
+        # The project requires Widgets and Gui components 
+        modules: 'qtwidgets qtgui'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_msvc2019_64'
 
-      # 2. Install (If not cached)
-      - name: Install Qt and OpenCV
-        if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: |
-          choco install qt6-base-dev -y
-          choco install opencv -y
+    - name: Setup OpenCV
+      # We use chocolatey (pre-installed on Windows runners) to get OpenCV quickly
+      run: |
+        choco install opencv -y
+        echo "OpenCV_DIR=C:\tools\opencv\build" >> $GITHUB_ENV
 
-      # 3. Configure (FIXED: Direct paths, no Resolve-Path crashes)
-      - name: Configure
-        run: |
-          if (!(Test-Path build)) { mkdir build }
-          
-          # Find the actual MSVC directory for Qt (avoiding the MinGW one)
-          # This looks for any folder starting with 'msvc' inside the Qt6 directory
-          $QT_MSVC = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\qt6-base-dev\*" -Include "msvc*" -Directory | Select-Object -First 1 -ExpandProperty FullName
-          
-          cmake -S Pebble -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="$QT_MSVC;C:/tools/opencv/build" `
-            -DQt6_DIR="$QT_MSVC/lib/cmake/Qt6"
+    - name: Configure CMake
+      # Using CMAKE_PREFIX_PATH to find Qt6 and OpenCV [cite: 1, 2]
+      run: |
+        cmake -B build `
+          -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }};C:\tools\opencv\build" `
+          -G "Visual Studio 17 2022" -A x64
 
-      # 4. Build
-      - name: Build
-        run: cmake --build build --config Release
+    - name: Build Project
+      run: cmake --build build --config Release
 
-      # 5. Package (FIXED: Correct tool path)
-      - name: Package
-        run: |
-          # Use the path from the environment variable
-          $binPath = "$env:Qt6_DIR/../../../bin" 
-          $env:PATH = "$binPath;$env:PATH"
-          & "$binPath/windeployqt.exe" --release build/Release/Pebble.exe
-          powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows-Release
-          path: Pebble-Windows.zip
+    - name: Upload Executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: Pebble-Windows-Exe
+        path: build/Release/Pebble.exe
