@@ -1,53 +1,42 @@
-name: Windows Native Build
+name: Windows Build
 
-on: [push]
+on:
+  push:
+  pull_request:
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install Qt6
-      # This action sets up the Qt binaries directly without requiring you to write Python scripts
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: '6.9.3'
-        modules: 'qtwidgets qtgui'
-        host: 'windows'
-        target: 'desktop'
-        arch: 'win64_msvc2019_64'
+      # Install Qt6 (Widgets + Gui)
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: 6.6.0
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          modules: qtbase qtwidgets qtgui
 
-    - name: Install OpenCV via Chocolatey
-      # Chocolatey is a native Windows package manager (Powershell based)
-      run: |
-        choco install opencv -y
-        echo "OpenCV_DIR=C:\tools\opencv\build" >> $GITHUB_ENV
+      # Install OpenCV using vcpkg
+      - name: Install OpenCV (vcpkg)
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgArguments: "opencv"
+          vcpkgDirectory: "${{ runner.workspace }}/vcpkg"
+          cleanAfterBuild: false
 
-    - name: Configure CMake
-      run: |
-        cmake -B build -S Pebble`
-          -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }};C:\tools\opencv\build" `
-          -G "Visual Studio 17 2022" -A x64
+      # Configure CMake
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
-    - name: Build Project
-      run: cmake --build build --config Release
-
-    - name: Deployment (Collect DLLs)
-      # This step ensures the .exe actually runs by gathering the Qt and OpenCV dependencies
-      shell: pwsh
-      run: |
-        mkdir dist
-        copy build\Release\Pebble.exe dist\
-        # Use windeployqt (shipped with Qt) to pull in all necessary Qt DLLs automatically
-        & "${{ env.Qt6_DIR }}\bin\windeployqt.exe" --release --no-compiler-runtime dist\Pebble.exe
-        # Manually copy OpenCV DLL
-        copy C:\tools\opencv\build\x64\vc16\bin\opencv_world*.dll dist\
-
-    - name: Upload Build Folder
-      uses: actions/upload-artifact@v4
-      with:
-        name: Pebble-Windows-Package
-        path: dist/
+      # Build
+      - name: Build
+        run: cmake --build build --config Release
