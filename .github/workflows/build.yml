@@ -22,22 +22,18 @@ jobs:
       - name: Install Qt and OpenCV
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          choco install qt6-base-dev -y --install-directory="C:/tools/Qt6"
+          choco install qt6-base-dev -y
           choco install opencv -y
 
       # 3. Configure (FIXED: Direct paths, no Resolve-Path crashes)
       - name: Configure
         run: |
           if (!(Test-Path build)) { mkdir build }
-          
-          # Chocolatey installs into a versioned subfolder (e.g. C:/tools/Qt6/6.x.x/...)
-          # This command finds the folder actually containing the CMake files.
-          $QT_ROOT = Get-ChildItem -Path "C:/tools/Qt6/*/msvc*" -Directory | Select-Object -First 1 -ExpandProperty FullName
-          $OPENCV_PATH = "C:/tools/opencv/build"
-
+          # Chocolatey sets $env:Qt6_DIR automatically to the correct path
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="$QT_ROOT;$OPENCV_PATH"
+            -DQt6_DIR="$env:Qt6_DIR" `
+            -DOpenCV_DIR="C:/tools/opencv/build"
 
       # 4. Build
       - name: Build
@@ -46,8 +42,10 @@ jobs:
       # 5. Package (FIXED: Correct tool path)
       - name: Package
         run: |
-          $env:PATH = "C:/tools/Qt6/bin;$env:PATH"
-          & "C:/tools/Qt6/bin/windeployqt.exe" --release build/Release/Pebble.exe
+          # Use the path from the environment variable
+          $binPath = "$env:Qt6_DIR/../../../bin" 
+          $env:PATH = "$binPath;$env:PATH"
+          & "$binPath/windeployqt.exe" --release build/Release/Pebble.exe
           powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
 
       - name: Upload
