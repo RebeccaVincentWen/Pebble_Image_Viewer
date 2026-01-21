@@ -29,10 +29,15 @@ jobs:
       - name: Configure
         run: |
           if (!(Test-Path build)) { mkdir build }
+          
+          # Find the actual MSVC directory for Qt (avoiding the MinGW one)
+          # This looks for any folder starting with 'msvc' inside the Qt6 directory
+          $QT_MSVC = Get-ChildItem -Path "C:\ProgramData\chocolatey\lib\qt6-base-dev\*" -Include "msvc*" -Directory | Select-Object -First 1 -ExpandProperty FullName
+          
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DQt6_DIR="$env:Qt6_DIR" `
-            -DOpenCV_DIR="C:/tools/opencv/build"
+            -DCMAKE_PREFIX_PATH="$QT_MSVC;C:/tools/opencv/build" `
+            -DQt6_DIR="$QT_MSVC/lib/cmake/Qt6"
 
       # 4. Build
       - name: Build
