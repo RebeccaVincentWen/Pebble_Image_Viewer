@@ -1,0 +1,78 @@
+name: Build Cross-Platform (Qt + OpenCV)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            qt_arch: win64_msvc2022_64
+            qt_ver: 6.6.0
+          - os: macos-latest
+            qt_arch: clang_64
+            qt_ver: 6.6.0
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Install Qt
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ matrix.qt_ver }}
+          arch: ${{ matrix.qt_arch }}
+
+      # 2. Install OpenCV (Windows via vcpkg)
+      - name: Install OpenCV (Windows)
+        if: runner.os == 'Windows'
+        run: vcpkg install opencv4:x64-windows
+
+      # 3. Install OpenCV (macOS via Homebrew)
+      - name: Install OpenCV (macOS)
+        if: runner.os == 'macOS'
+        run: brew install opencv
+
+      # 4. Configure CMake
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cmake -S . -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="${{ env.Qt6_DIR }}" `
+            ${{ runner.os == 'Windows' && '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake' || '' }}
+
+      # 5. Build Project
+      - name: Build Project
+        run: cmake --build build --config Release
+
+      # 6. Deployment / Packaging (Collect DLLs/Frameworks)
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        run: |
+          windeployqt build/Release/Pebble.exe
+          powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
+
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: |
+          macdeployqt build/Pebble.app -dmg
+          mv build/Pebble.dmg Pebble-macOS.dmg
+
+      # 7. Upload Finished App
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pebble-${{ runner.os }}
+          path: |
+            *.zip
+            *.dmg
