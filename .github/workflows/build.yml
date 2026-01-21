@@ -8,46 +8,41 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Cache (to save time)
+      # 1. Cache Dependencies
       - name: Cache Dependencies
         id: cache-deps
         uses: actions/cache@v4
         with:
           path: |
-            C:/ProgramData/chocolatey/lib/qt6-base-dev
+            C:/tools/Qt6
             C:/tools/opencv
-          key: ${{ runner.os }}-deps-${{ hashFiles('.github/workflows/*.yml') }}
+          key: ${{ runner.os }}-deps-v1
 
-      # 2. Install (Only if not cached)
+      # 2. Install (If not cached)
       - name: Install Qt and OpenCV
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          choco install qt6-base-dev -y
+          choco install qt6-base-dev -y --install-directory="C:/tools/Qt6"
           choco install opencv -y
 
-      # 3. Configure (FIXED: Using dynamic path detection)
+      # 3. Configure (FIXED: Direct paths, no Resolve-Path crashes)
       - name: Configure
         run: |
-          mkdir build
-          # We use Resolve-Path to find exactly where the tools landed
-          $QT_PATH = (Resolve-Path "C:/ProgramData/chocolatey/lib/qt6-base-dev/lib/cmake/Qt6").Path
-          $OPENCV_PATH = (Resolve-Path "C:/tools/opencv/build").Path
-          
+          if (!(Test-Path build)) { mkdir build }
           cmake -S Pebble -B build `
             -DCMAKE_BUILD_TYPE=Release `
-            -DQt6_DIR="$QT_PATH" `
-            -DOpenCV_DIR="$OPENCV_PATH"
+            -DQt6_DIR="C:/tools/Qt6/lib/cmake/Qt6" `
+            -DOpenCV_DIR="C:/tools/opencv/build"
 
       # 4. Build
       - name: Build
         run: cmake --build build --config Release
 
-      # 5. Package (FIXED: Dynamic path for windeployqt)
+      # 5. Package (FIXED: Correct tool path)
       - name: Package
         run: |
-          $QT_BIN = (Resolve-Path "C:/ProgramData/chocolatey/lib/qt6-base-dev/bin").Path
-          $env:PATH = "$QT_BIN;$env:PATH"
-          & "$QT_BIN/windeployqt.exe" --release build/Release/Pebble.exe
+          $env:PATH = "C:/tools/Qt6/bin;$env:PATH"
+          & "C:/tools/Qt6/bin/windeployqt.exe" --release build/Release/Pebble.exe
           powershell Compress-Archive -Path build/Release/* -DestinationPath Pebble-Windows.zip
 
       - name: Upload
