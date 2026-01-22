@@ -8,6 +8,7 @@
 #include <QPixmap>
 #include <QLabel>
 
+
 QImage cvMatToQImage(const cv::Mat& mat) {
     switch (mat.type()) {
         // 8-bit, 3-channel (BGR)
@@ -32,6 +33,4 @@ void readImage_Through_Filepath(std::string& image_path, QLabel& labelObject){
 
     QImage finalOutputImage = cvMatToQImage(imageInput);
     labelObject.setPixmap(QPixmap::fromImage(finalOutputImage));
-
-    
 }

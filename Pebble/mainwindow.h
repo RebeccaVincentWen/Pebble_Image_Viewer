@@ -16,6 +16,10 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    //this is where the recently added code begins
+    public slots:
+    //this is where the recently added code ends
+
 private:
     Ui::MainWindow *ui;
 };

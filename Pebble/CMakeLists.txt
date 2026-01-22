@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.ui
     image_Processing.hpp
+    file_Processing.hpp
+    logic_handler.hpp
 )
 
 # 5. Create Executable
