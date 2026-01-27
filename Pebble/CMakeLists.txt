@@ -30,6 +30,7 @@ set(PROJECT_SOURCES
     image_Processing.hpp
     file_Processing.hpp
     logic_handler.hpp
+    image_Processing.cpp
 )
 
 # 5. Create Executable
