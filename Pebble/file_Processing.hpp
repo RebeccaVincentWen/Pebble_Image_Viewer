@@ -18,8 +18,14 @@ inline std::string cacheFileName = "Application_Cache.txt";
 class FileProcessor{
     private:
     std::deque<std::string> HistoryStorage;
+    std::weak_ptr<std::string> movablePointer_ToCurrentPosition;
 
     public:
+    FileProcessor(){
+        
+    }
+
+    std::deque<std::string> GettheDeque(){return HistoryStorage;}
 
     void temporarilyStoreHistory(std::string& inputHistoryLink){
         HistoryStorage.push_back(inputHistoryLink);
