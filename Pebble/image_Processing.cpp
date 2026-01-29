@@ -16,11 +16,11 @@ QImage image_Processor::cvMatToQImage(const cv::Mat& mat) {
         // 8-bit, 3-channel (BGR)
         case CV_8UC3: {
             QImage qimg(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_BGR888);
-            return qimg.rgbSwapped(); // Convert BGR to RGB
+            return qimg.rgbSwapped().copy(); // Convert BGR to RGB
         }
         // 8-bit, 1-channel (Grayscale)
         case CV_8UC1: {
-            return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8);
+            return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8).copy();
         }
         default:
             return QImage();

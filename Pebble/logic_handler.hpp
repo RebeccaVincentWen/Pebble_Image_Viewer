@@ -27,7 +27,7 @@ class logicHandler_base: public QObject{
 
     void button_ScanFolder_reaction_handler(std::string& fileExtension, 
         QLineEdit& lineEdit, 
-        std::vector<std::string>& filePathSet, File_Processing::FileProcessor& fileProcessor){
+        std::deque<std::string>& filePathSet, File_Processing::FileProcessor& fileProcessor){
             std::string tempUserInput = lineEdit.text().toStdString();
             fileProcessor.selectAndScanFolder(fileExtension, tempUserInput, filePathSet);
         }

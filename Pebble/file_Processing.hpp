@@ -57,14 +57,14 @@ class FileProcessor{
         }
     }
 
-    void selectAndScanFolder(std::string& fileExtension, std::string& folderPath, std::vector<std::string>& filePathSet){
+    void selectAndScanFolder(std::string& fileExtension, std::string& folderPath, std::deque<std::string>& filePathSet){
         try
         {
             bool filePathExists = std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath);
             if(filePathExists == true){
                 for(const auto entry: std::filesystem::directory_iterator(folderPath)){
                     if(entry.path().extension() == fileExtension){
-                        filePathSet.emplace_back(entry.path());
+                        filePathSet.push_back(entry.path());
                     }
                 }
             }
