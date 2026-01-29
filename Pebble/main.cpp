@@ -27,7 +27,10 @@ int main(int argc, char *argv[])
 
     //define the control elements on the screen
     QPushButton button_Nextpage, button_Frontpage, ScanFolderButton, imageSelectionButton;
-    QMenu menu_ImageSelection;
+    QMenu menu_ImageSelection, menu_extensionNameSelection;
+    QPushButton button_extensionNameSelection;
+
+    button_extensionNameSelection.setText("Extension");
 
     imageSelectionButton.setText("Image Selection");
 
@@ -38,6 +41,19 @@ int main(int argc, char *argv[])
     File_Processing::FileProcessor fileProcessor;
     std::deque<std::string> filePathSet;
     std::string fileExtension = ".jpg";
+    std::vector<std::string> fileExtensionNames = {".png", ".jpg", ".jpeg"};
+
+    int16_t temporary_index = 0;
+
+    for(std::string item: fileExtensionNames){
+        menu_extensionNameSelection.addAction(QString::fromStdString(item))->setData(temporary_index);
+        temporary_index ++;
+    }
+
+    button_extensionNameSelection.setMenu(&menu_extensionNameSelection);
+    QObject::connect(&menu_extensionNameSelection, &QMenu::triggered, [&](QAction* action){
+        fileExtension = fileExtensionNames[action->data().toInt()];
+    });
 
     image_Processor imageProcessor;
 
@@ -48,10 +64,11 @@ int main(int argc, char *argv[])
 
     ScanFolderButton.setText("Scan For Images");
 
-    application_Top_Tool_Bar.addWidget(&button_Frontpage);
-    application_Top_Tool_Bar.addWidget(&button_Nextpage);
+    //application_Top_Tool_Bar.addWidget(&button_Frontpage);
+    //application_Top_Tool_Bar.addWidget(&button_Nextpage);
     application_Top_Tool_Bar.addWidget(&InputTheFilePath);
     application_Top_Tool_Bar.addWidget(&ScanFolderButton);
+    application_Top_Tool_Bar.addWidget(&button_extensionNameSelection);
 
     std::vector<QAction*> tempAction;
 
@@ -80,6 +97,7 @@ int main(int argc, char *argv[])
     });
 
     imageDisplayLabel.setFixedSize(800, 600);
+    imageDisplayLabel.setScaledContents(true);
 
     imageSelectionButton.setMenu(&menu_ImageSelection);
 
