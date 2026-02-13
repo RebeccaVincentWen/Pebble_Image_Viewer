@@ -27,8 +27,25 @@ class FileProcessor{
 
     std::deque<std::string> GettheDeque(){return HistoryStorage;}
 
+    bool checkIfInThehistory(std::string& RecordToBeChecked, std::deque<std::string>& originalSet){
+        bool RecordCheckResult = false;
+        for(std::string ListRecord: originalSet){
+            if(RecordToBeChecked == ListRecord){RecordCheckResult = true;}
+        }
+        return RecordCheckResult;
+    }
+
     void temporarilyStoreHistory(std::string& inputHistoryLink){
-        HistoryStorage.push_back(inputHistoryLink);
+        //HistoryStorage.push_back(inputHistoryLink);
+        bool checkResult_History = false;
+        for(std::string item: HistoryStorage){
+            if(inputHistoryLink == item)
+                checkResult_History = true;
+        }
+
+        if(!checkResult_History){
+            HistoryStorage.push_back(inputHistoryLink);
+        }
     }
 
     void writeToHistoryCache(std::string& Path_and_FileName){
@@ -53,7 +70,20 @@ class FileProcessor{
             HistoryStorage.clear();
         }
         else{
-            HistoryStorage.push_back(cache_toBeInserted);
+            //fix the bug of the looping file list
+            bool checkResult = false;
+            for(std::string item: HistoryStorage){
+                if(cache_toBeInserted == item)
+                {
+                    checkResult = true;
+                }
+                else{}
+            }
+
+            if(!checkResult){
+                HistoryStorage.push_back(cache_toBeInserted);
+            }
+            else{}
         }
     }
 
@@ -64,7 +94,14 @@ class FileProcessor{
             if(filePathExists == true){
                 for(const auto entry: std::filesystem::directory_iterator(folderPath)){
                     if(entry.path().extension() == fileExtension){
-                        filePathSet.push_back(entry.path());
+                        //filePathSet.push_back(entry.path());
+                        bool CheckResult = false;
+                        for (std::string tempCheckString: filePathSet){
+                            if(entry.path() == tempCheckString){CheckResult = true;}
+                        }
+                        if(!CheckResult){
+                            filePathSet.push_back(entry.path());
+                        }
                     }
                 }
             }

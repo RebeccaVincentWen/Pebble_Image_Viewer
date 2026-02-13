@@ -26,3 +26,17 @@ QImage image_Processor::cvMatToQImage(const cv::Mat& mat) {
             return QImage();
     }
 }
+
+cv::Mat ScalingImage_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, int targetYReso){
+    int actualXReso = inputImageMatrix.cols;
+    int actualYReso = inputImageMatrix.rows;
+
+    int newWidth, newHeight;
+
+    double xScaleRatio = static_cast<double>(targetXReso)*std::pow(actualXReso, -1);
+    double yScaleRatio = static_cast<double>(targetYReso)*std::pow(actualYReso, -1);
+
+    double finalRatio = std::min(xScaleRatio, yScaleRatio);
+
+    return inputImageMatrix.clone();
+}

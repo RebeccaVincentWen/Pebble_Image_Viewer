@@ -8,10 +8,12 @@
 #include <QObject>
 #include <QLineEdit>
 #include <QMenu>
+#include <QColor>
 
 #include "mainwindow.h"
 #include "image_Processing.hpp"
 #include "logic_handler.hpp"
+#include "customization.hpp"
 
 #define EndofHistoryCache "EoHC"
 
@@ -26,10 +28,11 @@ int main(int argc, char *argv[])
     QHBoxLayout application_Top_Tool_Bar;
 
     //define the control elements on the screen
-    QPushButton button_Nextpage, button_Frontpage, ScanFolderButton, imageSelectionButton;
+    Generic_PushButton button_Nextpage, button_Frontpage, ScanFolderButton, imageSelectionButton;
     QMenu menu_ImageSelection, menu_extensionNameSelection;
-    QPushButton button_extensionNameSelection;
+    Generic_PushButton button_extensionNameSelection;
 
+    button_extensionNameSelection.setMouseTracking(true);
     button_extensionNameSelection.setText("Extension");
 
     imageSelectionButton.setText("Image Selection");
