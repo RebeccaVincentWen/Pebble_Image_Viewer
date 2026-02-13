@@ -36,7 +36,10 @@ cv::Mat ScalingImage_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, in
     double xScaleRatio = static_cast<double>(targetXReso)*std::pow(actualXReso, -1);
     double yScaleRatio = static_cast<double>(targetYReso)*std::pow(actualYReso, -1);
 
-    double finalRatio = std::min(xScaleRatio, yScaleRatio);
+    double finalXReso = actualXReso*std::min(xScaleRatio, yScaleRatio);
+    double finalYReso = actualYReso*std::min(xScaleRatio, yScaleRatio);
+
+    cv::resize(inputImageMatrix, inputImageMatrix, cv::Size(finalXReso, finalYReso), 0, 0, cv::INTER_AREA);
 
     return inputImageMatrix.clone();
 }
