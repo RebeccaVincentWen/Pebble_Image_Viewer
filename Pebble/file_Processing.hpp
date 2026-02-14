@@ -21,11 +21,17 @@ class FileProcessor{
     std::weak_ptr<std::string> movablePointer_ToCurrentPosition;
 
     public:
-    FileProcessor(){
-        
-    }
+    FileProcessor(){}
 
     std::deque<std::string> GettheDeque(){return HistoryStorage;}
+
+    void ClearOriginalCache(){HistoryStorage.clear();}
+
+    void DebugOutput(std::deque<std::string>& filePathSet){
+        for(auto item : filePathSet){
+            std::cout<<item<<"\n";
+        }
+    }
 
     bool checkIfInThehistory(std::string& RecordToBeChecked, std::deque<std::string>& originalSet){
         bool RecordCheckResult = false;
@@ -35,16 +41,16 @@ class FileProcessor{
         return RecordCheckResult;
     }
 
-    void temporarilyStoreHistory(std::string& inputHistoryLink){
+    void temporarilyStoreHistory(std::string& inputHistoryLink, std::deque<std::string>& filePathSet){
         //HistoryStorage.push_back(inputHistoryLink);
         bool checkResult_History = false;
-        for(std::string item: HistoryStorage){
+        for(std::string item: filePathSet){
             if(inputHistoryLink == item)
                 checkResult_History = true;
         }
 
         if(!checkResult_History){
-            HistoryStorage.push_back(inputHistoryLink);
+            filePathSet.push_back(inputHistoryLink);
         }
     }
 
@@ -97,10 +103,10 @@ class FileProcessor{
                         //filePathSet.push_back(entry.path());
                         bool CheckResult = false;
                         for (std::string tempCheckString: filePathSet){
-                            if(entry.path() == tempCheckString){CheckResult = true;}
+                            if(static_cast<std::string>(entry.path()) == tempCheckString){CheckResult = true;}
                         }
                         if(!CheckResult){
-                            filePathSet.push_back(entry.path());
+                            filePathSet.push_back(static_cast<std::string>(entry.path()));
                         }
                     }
                 }

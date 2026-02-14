@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     //define the control elements on the screen
     Generic_PushButton button_Nextpage, button_Frontpage, ScanFolderButton, imageSelectionButton;
     QMenu menu_ImageSelection, menu_extensionNameSelection;
-    Generic_PushButton button_extensionNameSelection;
+    Generic_PushButton button_extensionNameSelection, button_ClearFilePathSet;
 
     button_extensionNameSelection.setMouseTracking(true);
     button_extensionNameSelection.setText("Extension");
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     QLineEdit InputTheFilePath;
     
     File_Processing::FileProcessor fileProcessor;
-    std::deque<std::string> filePathSet;
+    std::deque<std::string> filePathSet = std::deque<std::string>();
     std::string fileExtension = ".jpg";
     std::vector<std::string> fileExtensionNames = {".png", ".jpg", ".jpeg"};
 
@@ -66,25 +66,42 @@ int main(int argc, char *argv[])
     button_Nextpage.setText(">");
 
     ScanFolderButton.setText("Scan For Images");
+    button_ClearFilePathSet.setText(QString::fromStdString("Clear List"));
 
     //application_Top_Tool_Bar.addWidget(&button_Frontpage);
     //application_Top_Tool_Bar.addWidget(&button_Nextpage);
     application_Top_Tool_Bar.addWidget(&InputTheFilePath);
     application_Top_Tool_Bar.addWidget(&ScanFolderButton);
     application_Top_Tool_Bar.addWidget(&button_extensionNameSelection);
+    application_Top_Tool_Bar.addWidget(&button_ClearFilePathSet);
 
     std::vector<QAction*> tempAction;
 
     QObject::connect(&ScanFolderButton, &QPushButton::clicked, [&](){
+        filePathSet.clear();
         handler.button_ScanFolder_reaction_handler(fileExtension, 
             InputTheFilePath, filePathSet, fileProcessor);
             int16_t indexIntheDeque = 0;
+            fileProcessor.ClearOriginalCache();
+            bool checkresult = false;
             for(std::string item: filePathSet){
-                fileProcessor.temporarilyStoreHistory(item);
-                tempAction.emplace_back(menu_ImageSelection.addAction(QString::fromStdString(item)));
-                tempAction[indexIntheDeque]->setData(indexIntheDeque);
+                fileProcessor.temporarilyStoreHistory(item, filePathSet);
+                //tempAction.emplace_back(menu_ImageSelection.addAction(QString::fromStdString(item)));
+                //tempAction[indexIntheDeque]->setData(indexIntheDeque);
+
+                for(QAction* action: menu_ImageSelection.actions()){
+                    if((*action).text().toStdString() == item){checkresult = true;}
+                }
+
+                if(!checkresult){
+                    tempAction.emplace_back(menu_ImageSelection.addAction(QString::fromStdString(item)));
+                    tempAction[indexIntheDeque]->setData(indexIntheDeque);
+                }
+                checkresult = false;
+
                 indexIntheDeque++;
             }
+            //fileProcessor.DebugOutput(filePathSet);
     });
 
     QObject::connect(&menu_ImageSelection, &QMenu::triggered, [&](QAction* action){
@@ -97,6 +114,11 @@ int main(int argc, char *argv[])
                 fileProcessor.GettheDeque()[image_pathIndex], imageDisplayLabel);
         }
     }
+    });
+
+    QObject::connect(&button_ClearFilePathSet, &QPushButton::clicked, [&](){
+        filePathSet.clear();
+        fileProcessor.ClearOriginalCache();
     });
 
     imageDisplayLabel.setFixedSize(800, 600);

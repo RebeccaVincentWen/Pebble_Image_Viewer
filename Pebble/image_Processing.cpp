@@ -27,7 +27,7 @@ QImage image_Processor::cvMatToQImage(const cv::Mat& mat) {
     }
 }
 
-cv::Mat ScalingImage_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, int targetYReso){
+cv::Mat ScalingImagetoFit_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, int targetYReso){
     int actualXReso = inputImageMatrix.cols;
     int actualYReso = inputImageMatrix.rows;
 
