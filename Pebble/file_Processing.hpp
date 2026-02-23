@@ -17,111 +17,13 @@ inline std::string cacheFileName = "Application_Cache.txt";
 
 class FileProcessor{
     private:
-    std::deque<std::string> HistoryStorage;
-    std::weak_ptr<std::string> movablePointer_ToCurrentPosition;
+    
 
     public:
     FileProcessor(){}
+    ~FileProcessor(){}
 
-    std::deque<std::string> GettheDeque(){return HistoryStorage;}
-
-    void ClearOriginalCache(){HistoryStorage.clear();}
-
-    void DebugOutput(std::deque<std::string>& filePathSet){
-        for(auto item : filePathSet){
-            std::cout<<item<<"\n";
-        }
-    }
-
-    bool checkIfInThehistory(std::string& RecordToBeChecked, std::deque<std::string>& originalSet){
-        bool RecordCheckResult = false;
-        for(std::string ListRecord: originalSet){
-            if(RecordToBeChecked == ListRecord){RecordCheckResult = true;}
-        }
-        return RecordCheckResult;
-    }
-
-    void temporarilyStoreHistory(std::string& inputHistoryLink, std::deque<std::string>& filePathSet){
-        //HistoryStorage.push_back(inputHistoryLink);
-        bool checkResult_History = false;
-        for(std::string item: filePathSet){
-            if(inputHistoryLink == item)
-                checkResult_History = true;
-        }
-
-        if(!checkResult_History){
-            filePathSet.push_back(inputHistoryLink);
-        }
-    }
-
-    void writeToHistoryCache(std::string& Path_and_FileName){
-        bool tempresult = std::filesystem::exists(cacheFileName);
-        if(tempresult == false){
-            std::ofstream creationOfCacheFile(cacheFileName);
-            creationOfCacheFile << "#cache starts";
-            creationOfCacheFile.close();
-        }
-
-        std::ofstream tempFileStream(cacheFileName);
-        tempFileStream << Path_and_FileName;
-        tempFileStream.close();
-    }
-
-    void ManageCache(std::string& cache_toBeInserted){
-        if (cache_toBeInserted == EndofHistoryCache){
-            for(std::string item: HistoryStorage){
-                writeToHistoryCache(item);
-            }
-
-            HistoryStorage.clear();
-        }
-        else{
-            //fix the bug of the looping file list
-            bool checkResult = false;
-            for(std::string item: HistoryStorage){
-                if(cache_toBeInserted == item)
-                {
-                    checkResult = true;
-                }
-                else{}
-            }
-
-            if(!checkResult){
-                HistoryStorage.push_back(cache_toBeInserted);
-            }
-            else{}
-        }
-    }
-
-    void selectAndScanFolder(std::string& fileExtension, std::string& folderPath, std::deque<std::string>& filePathSet){
-        try
-        {
-            bool filePathExists = std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath);
-            if(filePathExists == true){
-                for(const auto entry: std::filesystem::directory_iterator(folderPath)){
-                    if(entry.path().extension() == fileExtension){
-                        //filePathSet.push_back(entry.path());
-                        bool CheckResult = false;
-                        for (std::string tempCheckString: filePathSet){
-                            if(static_cast<std::string>(entry.path()) == tempCheckString){CheckResult = true;}
-                        }
-                        if(!CheckResult){
-                            filePathSet.push_back(static_cast<std::string>(entry.path()));
-                        }
-                    }
-                }
-            }
-            else{
-                std::cerr << "Folder does not exist!\n";
-            }
-        }
-        catch(const std::filesystem::filesystem_error& e)
-        {
-            std::cerr << "File System Error:" << e.what() << '\n';
-        }
-    }
-
-    //the member function of the class ends
-};
 
 };
+
+}

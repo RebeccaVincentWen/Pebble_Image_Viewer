@@ -1,13 +1,17 @@
 
 #include "image_Processing.hpp"
 
-void image_Processor::readImage_Through_Filepath(std::string& image_path, QLabel& labelObject){
+void image_Processor::readImage_Through_Filepath(std::string& image_path, QLabel& labelObject,
+                int XReso, int YReso){
     cv::Mat imageInput = cv::imread(image_path);
+    cv::Mat changedImageInput;
     if(imageInput.empty() == true){return;}
 
     cv::cvtColor(imageInput, imageInput, cv::COLOR_BGR2RGB);
 
-    QImage finalOutputImage = cvMatToQImage(imageInput);
+    //changedImageInput = ScalingImagetoFit_KeepingRatio(imageInput, XReso, YReso);
+
+    QImage finalOutputImage = cvMatToQImage(imageInput).copy();
     labelObject.setPixmap(QPixmap::fromImage(finalOutputImage));
 }
 
@@ -27,7 +31,7 @@ QImage image_Processor::cvMatToQImage(const cv::Mat& mat) {
     }
 }
 
-cv::Mat ScalingImagetoFit_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, int targetYReso){
+cv::Mat image_Processor::ScalingImagetoFit_KeepingRatio(cv::Mat& inputImageMatrix, int targetXReso, int targetYReso){
     int actualXReso = inputImageMatrix.cols;
     int actualYReso = inputImageMatrix.rows;
 

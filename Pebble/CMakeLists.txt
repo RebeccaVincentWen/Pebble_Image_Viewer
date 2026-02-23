@@ -18,6 +18,8 @@ set(CMAKE_AUTOUIC ON) # Handles UI files (.ui)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui) 
 # Note: Change "Qt6" to "Qt5" if you are using the older version.
 
+find_package(Qt6 COMPONENTS Quick QuickWidgets REQUIRED)
+
 find_package(OpenCV REQUIRED)
 
 # 4. Define Source Files
@@ -27,9 +29,9 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    image_Processing.hpp
     file_Processing.hpp
-    logic_handler.hpp
+    file_Processing.cpp
+    image_Processing.hpp
     image_Processing.cpp
     customization.hpp
     customization.cpp
@@ -44,6 +46,8 @@ target_link_libraries(Pebble PRIVATE
     Qt6::Gui
     ${OpenCV_LIBS}
 )
+
+target_link_libraries(Pebble PRIVATE Qt6::Widgets Qt6::Quick Qt6::QuickWidgets)
 
 # 7. macOS Specific Bundle settings (Optional)
 set_target_properties(Pebble PROPERTIES
